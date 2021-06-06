@@ -1,0 +1,11 @@
+*.log
+*.pot
+*.pyc
+__pycache__/
+local_properties.py
+static/
+staticfiles/
+django_room/
+docs/
+.env
+.vscode/

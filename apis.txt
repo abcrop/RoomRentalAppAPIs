@@ -1,0 +1,65 @@
+password: 3RRharekrishna@267
+
+IsAdminAndOwnerReadOnly
+    get/detail/options: AllowForAll
+    post/put/delete: AdminAndOwner
+
+Room
+-getAllRooms /rooms/
+-getRoom /rooms/1/
+-deleteRoom /rooms/1/ delete
+-updateRoom /rooms/1/ update
+-filterRoom
+    -getAllRooms based on room_name /rooms/?room_name="room1"
+    -getAllRooms based on category_id /rooms/?category_id=1
+    -getAllRooms based on owner_id /rooms/?owner_id=1
+    -getAllRooms based on room_price /rooms/?room_price=123
+    -getAllRooms based on is_internet_avaliable /rooms/?is_internet_avaliable=True
+    -getAllRooms based on is_price_negotiable /rooms/?is_price_negotiable=True
+    -getAllRooms based on parking_type /rooms/?parking_type=BK
+    -getAllRooms based on min_price-max_price
+        /rooms/?min_price=100&max_price=5000
+    (All rooms from price 100 to 5000 will be listed)
+    
+
+-searchRoom 
+    --Based on location /rooms/?search='bharatpur'
+    --Based on name /rooms/?search='room1'
+
+-orderingRoom
+    -Based on ascending room_price /rooms/?ordering = room_price
+    -Based on descending room_price /rooms/?ordering = -room_price
+    -Based on ascending room_name /rooms/?ordering = room_name
+    -Based on descending room_name /rooms/?ordering = -room_name
+    -Based on ascending category_id /rooms/?ordering = category_id
+    -Based on descending category_id /rooms/?ordering = -category_id
+
+
+
+RoomFeature
+-getOwnerRoomFeatureOnly /roomFeatures/
+-getSpecificFeature /roomFeatures/1/
+-deleteFeature
+-updateFeature
+-filterRoomFeature
+    getFeaturesOfSpecificRoom /roomFeatures/?room_id=1
+
+House
+-getAllhouse /houses/
+-getSpecificHouse /houses/1/
+-deleteHouse
+-updateHouse
+-filterHouse
+    getHouseByOwnerId /houses/?owner_id=1
+
+
+RoomRequest
+-sendRoomRequest()
+-deleteRoomRequest()
+-updateRoomRequest()
+-getRoomRequests()
+
+
+
+Problem: 
+-oauth is not working along with django request.user

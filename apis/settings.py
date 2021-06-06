@@ -234,4 +234,4 @@ try:
 except: 
     print("No Such File Found in Localhost")
 
-django_heroku.settings(locals())
+# django_heroku.settings(locals())

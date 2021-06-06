@@ -3,7 +3,7 @@
 *.pyc
 __pycache__/
 local_properties.py
-static/
 staticfiles/
 docs/
+django_room/
 .env

@@ -33,8 +33,6 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 
 DEBUG = os.environ.get('DEBUG')
 
-ALLOWED_HOSTS = list(os.environ.get('ALLOWED_HOSTS_HEROKU'))
-
 # Application definition
 AUTHENTICATION_BACKENDS = (
     'oauth2_provider.backends.OAuth2Backend',
@@ -228,10 +226,17 @@ LOGGING = {
     },
 }
 
-#apply local_properties in LOCALHOST
-try:
-    from endpoints.local_properties import *
-except: 
-    print("No Such File Found in Localhost")
+if DEBUG:
+    #apply local_properties in LOCALHOST
+    try:
+        from endpoints.local_properties import *
+    except: 
+        print("No Such File Found in Local Properties")
+else:
+    try:
+        from endpoints.heroku_properties import *
+    except: 
+        print("No Such File Found in Heroku Properties")
+    
 
 # django_heroku.settings(locals())

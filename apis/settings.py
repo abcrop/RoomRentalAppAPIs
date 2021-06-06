@@ -32,7 +32,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 
 ALLOWED_HOSTS = ['192.168.1.250', 'roomrentalapis.herokuapp.com', 'roomrentalapis.com', ]
 
-DEBUG = os.environ.get('DEBUG')
+DEBUG = False
 
 # Application definition
 AUTHENTICATION_BACKENDS = (
@@ -134,10 +134,10 @@ USE_L10N = True
 
 USE_TZ = True
 
-# Parse database connection url strings like psql://user:pass@127.0.0.1:8458/db
-if not os.environ.get('DEBUG'):
-    DATABASES = {}
-    DATABASES['default'] = dj_database_url.config(conn_max_age=600, ssl_require=False)
+# # Parse database connection url strings like psql://user:pass@127.0.0.1:8458/db
+# if DEBUG:
+#     DATABASES = {}
+#     DATABASES['default'] = dj_database_url.config(conn_max_age=600, ssl_require=False)
 
 #oauth config
 LOGIN_URL='/admin'+ os.environ.get('ADMIN') + '/login/'
@@ -199,7 +199,7 @@ REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
         #Disables browsable api feature for production
         'rest_framework.renderers.JSONRenderer',
-    ) if not os.environ.get('DEBUG') 
+    ) if DEBUG
     else (
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',

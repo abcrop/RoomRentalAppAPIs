@@ -27,7 +27,7 @@ oauth2_endpoint_views = [
     path('refresh_token/'+os.environ.get('REFRESHTOKEN') + '/', oauth2_views.TokenView.as_view() , name="revoke-token"),
 ]
 
-if os.environ.get('DEBUG'):
+if DEBUG:
     
     # OAuth2 Application Management endpoints
     oauth2_endpoint_views += [
@@ -55,7 +55,7 @@ urlpatterns = [
     path('oauth2/', include((oauth2_endpoint_views, 'oauth2_provider'), namespace='oauth2_provider')),
     
     #debug_toolbar urls
-    path('_debug_/', include(debug_toolbar.urls)) if os.environ.get('DEBUG') else path("",apis.Home, ),
+    path('_debug_/', include(debug_toolbar.urls)) if DEBUG else path("",apis.Home, ),
     
     # path("",apis.Home, ),
     

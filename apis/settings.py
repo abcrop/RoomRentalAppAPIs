@@ -155,7 +155,7 @@ LOGIN_URL='/admin'+ os.environ.get('ADMIN') + '/login/'
 #static files (CSS, JS, Images)
 STATIC_URL = '/static/'
 
-if os.environ.get(DEBUG):
+if os.environ.get('DEBUG'):
     #Local finds all the static resources and stores in 'staticfiles' folder
     STATICFILES_DIRS = (
         os.path.join(BASE_DIR, 'staticfiles'),

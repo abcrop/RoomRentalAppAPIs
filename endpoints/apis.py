@@ -393,22 +393,28 @@ class GetTokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
         """
         Restricting number of parameters users can put.
         """
+        
         if len(self.request.data) > NUMBER_OF_LOGIN_PARAMERTERS:
             self.data['error'] = "Unnecessary parameters."
-            raise BadRequest(self.data['error'])
+            return Response(self.data, status=status.HTTP_400_BAD_REQUEST)    
         
     def create(self, request, *args, **kwargs):    
-        url = BASEURL+"/oauth2/token14X7xQ8UOeIX2jGDD8EcktwWY0vrfGlMapa12IQZpjBsvV2Cuk/"
-        
-        self.bad_request()
-        validate_username(self, request.data['username'])
-        validate_password(self, request.data['password'])
+        url = BASEURL+f"/oauth2/token{os.environ['GETTOKEN']}/"
         
         grant_type = 'password'
-        username = request.data['username']
-        password = request.data['password']
         client_id = os.environ.get('CLIENT_ID_MOBILE_CLIENT')
         client_secret = os.environ.get('CLIENT_SECRET_MOBILE_CLIENT')
+        
+        try:
+            username = request.data['username']
+            password = request.data['password']
+        except Exception as e:
+            self.data['error'] = "Username and password are required."
+            return Response(self.data, status=status.HTTP_400_BAD_REQUEST)
+        
+        self.bad_request()
+        username = validate_username(self, username)
+        password = validate_password(self, password)
         
         data = {
             'grant_type' : grant_type,
@@ -416,7 +422,6 @@ class GetTokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
             'password' : password,
             'client_id' : client_id,
             'client_secret': client_secret
-            
         }
 
         result = requests.post(url, data=data)
@@ -443,7 +448,7 @@ class RevokeTokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     schema = None
     
     def create(self, request, *args, **kwargs):
-        url = BASEURL + "/oauth2/revoke_token69d4VgX5Mc5T6K8Rq52vJuEqzdsALD3PkiM1BfNTWumc2k4qxS/"
+        url = BASEURL + f"/oauth2/revoke_token{os.environ['REVOKETOKEN']}/"
         token = request.META['HTTP_AUTHORIZATION'].split(" ")[1]
         client_id = os.environ.get('CLIENT_ID_MOBILE_CLIENT')
         client_secret = os.environ.get('CLIENT_SECRET_MOBILE_CLIENT')
@@ -484,7 +489,7 @@ class RefreshTokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     schema = None
     
     def create(self, request, *args, **kwargs):
-        url = BASEURL + "/oauth2/refresh_token1MGf48tUWoSxu1TTrix91858MCwIxy4T29DM1FMwpKH5ZP59lq/"
+        url = BASEURL + f"/oauth2/refresh_token{os.environ['REFRESHTOKEN']}/"
         grant_type = 'refresh_token'
         refresh_token = request.data['refresh_token']
         client_id = os.environ.get('CLIENT_ID_MOBILE_CLIENT')

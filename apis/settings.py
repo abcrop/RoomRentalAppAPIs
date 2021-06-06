@@ -32,7 +32,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 
 ALLOWED_HOSTS = ['192.168.1.250', 'roomrentalapis.herokuapp.com', 'roomrentalapis.com', ]
 
-DEBUG = True
+DEBUG = False
 
 # Application definition
 AUTHENTICATION_BACKENDS = (

@@ -153,11 +153,13 @@ LOGIN_URL='/admin'+ os.environ.get('ADMIN') + '/login/'
 
 #static files (CSS, JS, Images)
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR,'staticfiles')
 
-#in heroku, to find static files
+#Where to store all the static file after 'collectstatic' runs
+STATIC_ROOT = os.path.join(BASE_DIR,'static')
+
+#in heroku, to find static files, where static files are
 STATICFILES_DIRS = (
-    os.path.join(BASE_DIR, 'static'),
+    os.path.join(BASE_DIR, 'staticfiles'),
 )
 
 #django doesn't support static files in production so whitenoise comes into play

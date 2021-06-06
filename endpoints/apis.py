@@ -11,12 +11,11 @@ import json
 from django.db.models import signals as django_signals
 from endpoints import signals
 from django.core.validators import validate_email
-from endpoints import contants
 from endpoints.services import validate_password, validate_username
 from django.utils.functional import partition
 from django.views.generic.base import View
 from rest_framework.serializers import raise_errors_on_nested_writes
-from endpoints.contants import BASEURL, EMPTY_PASSWORD, EMPTY_USERNAME, INVALID_PASSWORD, INVALID_USERNAME, NUMBER_OF_LOGIN_PARAMERTERS
+from endpoints import constants
 from django.db import transaction
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import BadRequest, ValidationError
@@ -344,7 +343,7 @@ class UpdatePassword(mixins.UpdateModelMixin,viewsets.GenericViewSet):
                     print(f"refresh token: {current_refresh_token}")
                     
                     result = requests.post(
-                        BASEURL+"/refreshToken/",
+                        constants.BASEURL+"/refreshToken/",
                         data={
                             'refresh_token': current_refresh_token,        
                         },
@@ -389,17 +388,17 @@ class GetTokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     data = {}
     schema = None
 
-    def bad_request(self):
+    def bad_params(self):
         """
         Restricting number of parameters users can put.
         """
         
-        if len(self.request.data) > NUMBER_OF_LOGIN_PARAMERTERS:
-            self.data['error'] = "Unnecessary parameters."
-            return Response(self.data, status=status.HTTP_400_BAD_REQUEST)    
+        if len(self.request.data) > constants.NUMBER_OF_LOGIN_PARAMERTERS or len(self.request.data) < constants.NUMBER_OF_LOGIN_PARAMERTERS:
+            self.data['error'] = "Bad parameters."
+            return Response(self.data, status=constants.INVALID_PARAMETERS)    
         
     def create(self, request, *args, **kwargs):    
-        url = BASEURL+f"/oauth2/token{os.environ['GETTOKEN']}/"
+        url = constants.BASEURL+f"/oauth2/token{os.environ['GETTOKEN']}/"
         
         grant_type = 'password'
         client_id = os.environ.get('CLIENT_ID_MOBILE_CLIENT')
@@ -408,38 +407,43 @@ class GetTokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
         try:
             username = request.data['username']
             password = request.data['password']
+            
+            self.bad_params()
+            username = validate_username(self, username)
+            password = validate_password(self, password)
+            
+            data = {
+                'grant_type' : grant_type,
+                'username' : username,
+                'password' : password,
+                'client_id' : client_id,
+                'client_secret': client_secret
+            }
+
+            print(username , password)
+            result = requests.post(url, data=data)
+            
+            if result.status_code == 200:
+                print(result.text)
+                return Response(result.json())
+            
+            elif result.status_code == 401:
+                self.data['error'] = "Invalid client."
+                
+            elif result.status_code == 400:
+                self.data['error'] = "Username or password is incorrect."
+            
+            else:
+                self.data['error'] = "Error while getting token."
+            print(result.text)
+            return Response(data=self.data, status=result.status_code)
+                
+            
         except Exception as e:
             self.data['error'] = "Username and password are required."
             return Response(self.data, status=status.HTTP_400_BAD_REQUEST)
         
-        self.bad_request()
-        username = validate_username(self, username)
-        password = validate_password(self, password)
-        
-        data = {
-            'grant_type' : grant_type,
-            'username' : username,
-            'password' : password,
-            'client_id' : client_id,
-            'client_secret': client_secret
-        }
-
-        result = requests.post(url, data=data)
-        
-        if result.status_code == 200:
-            print(result.text)
-            return Response(result.json())
-        
-        elif result.status_code == 401:
-            self.data['message'] = "Invalid client."
-            
-        elif result.status_code == 400:
-            self.data['message'] = "Username or password is incorrect."
-        
-        self.data['message'] = "Error while getting token."
-        return Response(data=self.data, status=result.status_code)
-            
-        
+       
 
 class RevokeTokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     serializer_class = serializers.RevokeTokenSerializer
@@ -448,7 +452,7 @@ class RevokeTokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     schema = None
     
     def create(self, request, *args, **kwargs):
-        url = BASEURL + f"/oauth2/revoke_token{os.environ['REVOKETOKEN']}/"
+        url = constants.BASEURL + f"/oauth2/revoke_token{os.environ['REVOKETOKEN']}/"
         token = request.META['HTTP_AUTHORIZATION'].split(" ")[1]
         client_id = os.environ.get('CLIENT_ID_MOBILE_CLIENT')
         client_secret = os.environ.get('CLIENT_SECRET_MOBILE_CLIENT')
@@ -471,8 +475,9 @@ class RevokeTokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
             
         elif result.status_code == 400:
             self.data['message'] = "Invalid token."
-
-        self.data['message'] = "Error revoking access token."
+            
+        else:
+            self.data['message'] = "Error revoking access token."
         return Response(data= self.data, status = result.status_code)
 
 """
@@ -489,7 +494,7 @@ class RefreshTokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     schema = None
     
     def create(self, request, *args, **kwargs):
-        url = BASEURL + f"/oauth2/refresh_token{os.environ['REFRESHTOKEN']}/"
+        url = constants.BASEURL + f"/oauth2/refresh_token{os.environ['REFRESHTOKEN']}/"
         grant_type = 'refresh_token'
         refresh_token = request.data['refresh_token']
         client_id = os.environ.get('CLIENT_ID_MOBILE_CLIENT')
@@ -515,8 +520,9 @@ class RefreshTokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
             
         elif result.status_code == 400:
             self.data['message'] = "Invalid refresh token."
-
-        self.data['message'] = "Error while refreshing access token."
+        
+        else:
+            self.data['message'] = "Error while refreshing access token."
         return Response(data = self.data, status = result.status_code)
 
 @login_required()

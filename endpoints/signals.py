@@ -3,7 +3,7 @@ from django.core.exceptions import PermissionDenied
 from django.db.models.signals import pre_delete
 from django.dispatch.dispatcher import receiver
 from endpoints import models
-from endpoints import contants
+from endpoints import constants
 import logging
 
 logger = logging.getLogger(__name__)

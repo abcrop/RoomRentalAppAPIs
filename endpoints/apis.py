@@ -411,39 +411,37 @@ class GetTokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
             self.bad_params()
             username = validate_username(self, username)
             password = validate_password(self, password)
-            
-            data = {
-                'grant_type' : grant_type,
-                'username' : username,
-                'password' : password,
-                'client_id' : client_id,
-                'client_secret': client_secret
-            }
-
-            print(username , password)
-            result = requests.post(url, data=data)
-            
-            if result.status_code == 200:
-                print(result.text)
-                return Response(result.json())
-            
-            elif result.status_code == 401:
-                self.data['error'] = "Invalid client."
-                
-            elif result.status_code == 400:
-                self.data['error'] = "Username or password is incorrect."
-            
-            else:
-                self.data['error'] = "Error while getting token."
-            print(result.text)
-            return Response(data=self.data, status=result.status_code)
-                
-            
+                    
         except Exception as e:
             self.data['error'] = "Username and password are required."
             return Response(self.data, status=status.HTTP_400_BAD_REQUEST)
+
+        data = {
+            'grant_type' : grant_type,
+            'username' : username,
+            'password' : password,
+            'client_id' : client_id,
+            'client_secret': client_secret
+        }
+
+        print(username , password)
+        result = requests.post(url, data=data)
         
-       
+        if result.status_code == 200:
+            print(result.text)
+            return Response(result.json())
+        
+        elif result.status_code == 401:
+            self.data['error'] = "Invalid client."
+            
+        elif result.status_code == 400:
+            self.data['error'] = "Username or password is incorrect."
+        
+        else:
+            self.data['error'] = "Error while getting token."
+        print(result.text)
+        return Response(data=self.data, status=result.status_code)
+                
 
 class RevokeTokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     serializer_class = serializers.RevokeTokenSerializer

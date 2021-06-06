@@ -33,14 +33,14 @@ try:
         
         #apply local_properties in LOCALHOST
         try:
-            from endpoints.settings.local_properties import *
+            from endpoints.local_properties import *
         except: 
             print("No Such File Found in Localhost")
                 
     else: 
         #apply heroku_properties in HEROKU PRODUCTION
         try:
-            from endpoints.settings.heroku_properties import *
+            from endpoints.heroku_properties import *
         except: 
             print("No Such File Found in Heroku Production")
 except Exception as e:

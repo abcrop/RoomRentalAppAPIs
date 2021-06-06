@@ -18,7 +18,6 @@ import rest_framework
 import whitenoise
 import dj_database_url
 from pathlib import Path
-from oauth2_provider.contrib.rest_framework import OAuth2Authentication
 from django.conf.global_settings import DATETIME_FORMAT
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -59,6 +58,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    #whitenoise fixes the collect static in production heroku
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     #Checks wheather request contains token 

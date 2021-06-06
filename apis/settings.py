@@ -27,7 +27,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 #Initializing dotenv
 try:
     dotenv_file = dotenv.find_dotenv(filename='.env')
-
+    print(".env don't has error")
     if os.path.isfile(dotenv_file):
         dotenv.load_dotenv(dotenv_file)
         
@@ -44,6 +44,7 @@ try:
         except: 
             print("No Such File Found in Heroku Production")
 except Exception as e:
+    print(".env error found....")
     print(e)
 
 SECRET_KEY = os.environ.get('SECRET_KEY')
@@ -154,13 +155,14 @@ LOGIN_URL='/admin'+ os.environ.get('ADMIN') + '/login/'
 #static files (CSS, JS, Images)
 STATIC_URL = '/static/'
 
-#Where to store all the static file after 'collectstatic' runs
-STATIC_ROOT = os.path.join(BASE_DIR,'static')
-
-#in heroku, to find static files, where static files are
-STATICFILES_DIRS = (
-    os.path.join(BASE_DIR, 'staticfiles'),
-)
+if os.environ.get(DEBUG):
+    #Local finds all the static resources and stores in 'staticfiles' folder
+    STATICFILES_DIRS = (
+        os.path.join(BASE_DIR, 'staticfiles'),
+    )
+else:
+    #Heroku finds all the static resources and stores in 'staticfiles' folder
+    STATIC_ROOT = os.path.join(BASE_DIR,'static')
 
 #django doesn't support static files in production so whitenoise comes into play
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'

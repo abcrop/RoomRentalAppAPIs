@@ -25,29 +25,15 @@ from django.conf.global_settings import DATETIME_FORMAT
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 #Initializing dotenv
-try:
-    dotenv_file = dotenv.find_dotenv(filename='.env')
-    print(".env don't has error")
-    if os.path.isfile(dotenv_file):
-        dotenv.load_dotenv(dotenv_file)
-        
-        #apply local_properties in LOCALHOST
-        try:
-            from endpoints.local_properties import *
-        except: 
-            print("No Such File Found in Localhost")
-                
-    else: 
-        #apply heroku_properties in HEROKU PRODUCTION
-        try:
-            from endpoints.heroku_properties import *
-        except: 
-            print("No Such File Found in Heroku Production")
-except Exception as e:
-    print(".env error found....")
-    print(e)
-
+dotenv_file = dotenv.find_dotenv(filename='.env')
+if os.path.isfile(dotenv_file):
+    dotenv.load_dotenv(dotenv_file)
+            
 SECRET_KEY = os.environ.get('SECRET_KEY')
+
+DEBUG = os.environ.get('DEBUG')
+
+ALLOWED_HOSTS = list(os.environ.get('ALLOWED_HOSTS_HEROKU'))
 
 # Application definition
 AUTHENTICATION_BACKENDS = (
@@ -148,6 +134,10 @@ USE_L10N = True
 
 USE_TZ = True
 
+# Parse database connection url strings like psql://user:pass@127.0.0.1:8458/db
+if not os.environ.get('DEBUG'):
+    DATABASES = {}
+    DATABASES['default'] = dj_database_url.config(conn_max_age=600, ssl_require=False)
 
 #oauth config
 LOGIN_URL='/admin'+ os.environ.get('ADMIN') + '/login/'
@@ -238,5 +228,11 @@ LOGGING = {
         'level': 'DEBUG',
     },
 }
+
+#apply local_properties in LOCALHOST
+try:
+    from endpoints.local_properties import *
+except: 
+    print("No Such File Found in Localhost")
 
 django_heroku.settings(locals())

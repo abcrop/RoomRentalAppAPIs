@@ -144,12 +144,13 @@ LOGIN_URL='/admin'+ os.environ.get('ADMIN') + '/login/'
 
 #static files (CSS, JS, Images)
 STATIC_URL = '/static/'
-#Heroku finds all the static resources and stores in 'staticfiles' folder
+
+#Looking for static files in staticfiles folder
 STATIC_ROOT = os.path.join(BASE_DIR,'staticfiles')
 
-#Remote collect static in assets folder
+#Looking for static files in static folder
 STATICFILES_DIRS = (
-    os.path.join(BASE_DIR, 'assets'),
+    os.path.join(BASE_DIR, 'static'),
 )
 
 #django doesn't support static files in production so whitenoise comes into play

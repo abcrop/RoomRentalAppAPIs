@@ -27,12 +27,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 dotenv_file = dotenv.find_dotenv(filename='.env')
 if os.path.isfile(dotenv_file):
     dotenv.load_dotenv(dotenv_file)
-            
+    
 SECRET_KEY = os.environ.get('SECRET_KEY')
 
-ALLOWED_HOSTS = ['192.168.1.250', 'roomrentalapis.herokuapp.com', 'roomrentalapis.com', ]
-
-DEBUG = os.environ.get('DEBUG')
+try:
+    from endpoints.local_properties import *
+except: 
+    from endpoints.heroku_properties import *
+    print("No Such File Found in Local Properties")
+    
 
 # Application definition
 AUTHENTICATION_BACKENDS = (
@@ -228,17 +231,5 @@ LOGGING = {
     },
 }
 
-if DEBUG:
-    #apply local_properties in LOCALHOST
-    try:
-        from endpoints.local_properties import *
-    except: 
-        print("No Such File Found in Local Properties")
-else:
-    try:
-        from endpoints.heroku_properties import *
-    except: 
-        print("No Such File Found in Heroku Properties")
-    
 
 # django_heroku.settings(locals())

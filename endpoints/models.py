@@ -36,7 +36,7 @@ class AppUser(AbstractUser):
     is_blocked = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = [ 'password', 'username', 'phone_number', 'first_name', 'last_name', 'date_of_birth', 'user_type',  ]
+    REQUIRED_FIELDS = [ 'password', 'username', 'phone_number', 'date_of_birth', 'user_type', 'address'  ]
     objects = AppUserManager()
     
     def __str__(self):

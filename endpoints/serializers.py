@@ -3,7 +3,7 @@ from endpoints import services
 from wsgiref.handlers import read_environ
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
-from rest_framework.fields import CharField, DateTimeField, EmailField, HiddenField, ReadOnlyField
+from rest_framework.fields import CharField, DateField, DateTimeField, EmailField, HiddenField, ReadOnlyField
 from endpoints import models
 from apis import settings
 from django.utils import timezone
@@ -129,24 +129,34 @@ class SignupUserSerializer(serializers.ModelSerializer):
     last_login = DateTimeFieldWithTimeZone(format=settings.DATETIME_FORMAT, read_only = True)
     updated_at = DateTimeFieldWithTimeZone(format=settings.DATETIME_FORMAT, read_only = True)
     image = serializers.ImageField(max_length=None, use_url=True, required=False)
+    date_of_birth = DateField(required=True)
+    phone_number = CharField(required=True)
+    address = CharField(required=True)
     
     def validate_password(self, value):
       return services.validate_password(self,value)
     
     def validate(self, data):
-        required_fields = ['username', 'email', 'password', 'first_name', 'last_name', 'phone_number', 'education', 'occupation', 'user_type', ]
+        required_fields = ['username', 'email', 'password', 'user_type', 'date_of_birth', 'phone_number', 'address' ]
         keys = [key for key in data.keys()]
-        
+
         print(keys)
+        """
+        -Checking if required_fields is a subset of keys
+        result = all( field in keys for field in keys)
         
-        #checking if required_fields is a subset of keys
-        # result = all( field in keys for field in keys)
+        eg:
+        testkeys = [ 'a', 'b', 'c', 'd']
+        test = ['a', 'b', 'c', 'd']
         
-        if not set(keys).issubset(set(required_fields)):        
+        if set(test).issubset(set(testkeys)):
+            print("test is subset of testkeys")
+        """
+        
+        if not set(required_fields).issubset(set(keys)):        
             raise serializers.ValidationError(f'You have missed required fields.')
-        
-        if not re.search('^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$',data['email']):
-            services.validate_email_api(data['email'])
+      
+        services.validate_email_api(self, data['email'])
         
         return data
     

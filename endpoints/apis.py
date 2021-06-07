@@ -475,7 +475,6 @@ class GetTokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
 class RevokeTokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     if not settings.DEBUG:
         schema = None
-        
     serializer_class = serializers.RevokeTokenSerializer
     permission_classes = [IsAuthenticated, IsAdminOrResourceOwnerOnly, ]
     data = {}

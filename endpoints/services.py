@@ -33,7 +33,16 @@ def validate_username(self, value):
     
     return value
 
+"""
+validate_email_api:
+-validating only email if it blacklisted on or not
+-if email has right format or not
+
+"""
 def validate_email_api(self, value):
     if MailChecker.is_valid(value):
+        print("valid email")
+        
         return value
+    print("invalid email")
     return serializers.ValidationError("Invalid email address")

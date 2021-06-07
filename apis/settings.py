@@ -32,7 +32,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 
 try:
     from endpoints.local_properties import *
-except Exception as e: 
+except ModuleNotFoundError as e: 
     from endpoints.heroku_properties import *
     print("No Such File Found in Local Properties")
     

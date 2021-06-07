@@ -8,7 +8,7 @@ from .managers import AppUserManager
 from django.utils import timezone
 
 class AppUser(AbstractUser):    
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True, null=False)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True)
     email = models.EmailField(_('email address'), unique=True)
     username = models.CharField(max_length=20,null=False)
     date_of_birth = models.DateField( blank=True, null=True)
@@ -46,8 +46,6 @@ class AppUser(AbstractUser):
         self.updated_at = timezone.now()
         return super().save(*args, **kwargs)
   
-    # def set_password(self, *args, **kwargs):
-    #     self.password = **kwargs['validated_password']
 
 class House(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True, editable=False, null=False)

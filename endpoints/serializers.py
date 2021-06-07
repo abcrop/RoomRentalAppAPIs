@@ -117,14 +117,15 @@ class FavoriteSerializer(serializers.ModelSerializer):
         fields = ("__all__")
         
 class SignupUserSerializer(serializers.ModelSerializer):
+    id = serializers.UUIDField(read_only=True)
     is_staff = ReadOnlyField()
     is_active = ReadOnlyField()
     is_superuser = ReadOnlyField()
     date_joined = DateTimeFieldWithTimeZone(format=settings.DATETIME_FORMAT, read_only = True)
     is_blocked = ReadOnlyField()
     password = CharField(write_only=True)
-    groups = HiddenField(default="Not visible")
-    user_permissions = HiddenField(default="Not visible")
+    groups = CharField(default=None, read_only=True)
+    user_permissions = CharField(default=None, read_only=True)
     last_login = DateTimeFieldWithTimeZone(format=settings.DATETIME_FORMAT, read_only = True)
     updated_at = DateTimeFieldWithTimeZone(format=settings.DATETIME_FORMAT, read_only = True)
     image = serializers.ImageField(max_length=None, use_url=True, required=False)
@@ -136,10 +137,12 @@ class SignupUserSerializer(serializers.ModelSerializer):
         required_fields = ['username', 'email', 'password', 'first_name', 'last_name', 'phone_number', 'education', 'occupation', 'user_type', ]
         keys = [key for key in data.keys()]
         
+        print(keys)
+        
         #checking if required_fields is a subset of keys
         # result = all( field in keys for field in keys)
         
-        if not set(required_fields).issubset(set(keys)):        
+        if not set(keys).issubset(set(required_fields)):        
             raise serializers.ValidationError(f'You have missed required fields.')
         
         if not re.search('^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$',data['email']):
@@ -163,6 +166,7 @@ class SignupUserSerializer(serializers.ModelSerializer):
         fields = [field.name for field in model._meta.fields]
         fields.append('groups')
         fields.append('user_permissions')
+    
 
 class PasswordUpdateSerializer(serializers.ModelSerializer):
     current_password = CharField(write_only=True)
@@ -197,6 +201,12 @@ class PasswordUpdateSerializer(serializers.ModelSerializer):
         fields.append("current_password")
         fields.append("new_password")
         fields.append("refresh_token")
+        
+        # extra_kwargs = {
+        #     'id' : {
+        #         'er'
+        #     }
+        # }
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):

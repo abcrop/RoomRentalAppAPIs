@@ -13,7 +13,7 @@ class AppUserAdmin(UserAdmin):
     ordering = ('email', 'first_name', )
     search_fileds = ('email', 'first_name', 'date_joined', 'updated_at', )
     #to counter error: can't be specified for appuser model form as it is a non-editiable field
-    readonly_fields = ('updated_at',)
+    readonly_fields = ('updated_at', 'id', )
     
     fieldsets = (
         ('Credentials', {'fields': ('email', 'password')}),

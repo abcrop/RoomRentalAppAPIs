@@ -1,8 +1,6 @@
 from rest_framework import permissions
 import logging
 
-from rest_framework.exceptions import APIException, PermissionDenied
-
 logger = logging.getLogger(__name__)
 del logging
 
@@ -35,7 +33,7 @@ class IsAdminOrLandLordAndReadOnly(permissions.BasePermission):
                     return False
                 
             except Exception as e:
-                raise PermissionDenied()
+                raise False
                     
         return True
             

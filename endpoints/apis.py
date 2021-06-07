@@ -8,7 +8,9 @@ import requests
 import os
 import dotenv
 import json
+from django.conf import settings
 from django.db.models import signals as django_signals
+from rest_framework.schemas.coreapi import AutoSchema
 from endpoints import signals
 from django.core.validators import validate_email
 from endpoints.services import validate_password, validate_username
@@ -191,6 +193,27 @@ class RoomRequestViewSet(viewsets.ModelViewSet):
         queryset = models.RoomRequest.objects.all()
         return queryset
     
+    def list(self, request, *args, **kwargs):
+        if request.user.user_type != 'AD':
+            queryset = self.get_queryset()
+            if request.user.user_type == 'TN':
+                owner_only_queryset = queryset.filter(tenant_id = request.user)
+            elif request.user.user_type == 'LL':
+                owner_only_queryset = queryset.filter(room_id__owner_id = request.user)
+                print("i am landloard")
+            
+            page = self.paginate_queryset(owner_only_queryset)
+            
+            if page:
+                print("ready to fire")
+                print(owner_only_queryset)
+                
+                serializer = self.get_serializer(data=page, many=True)
+                return self.get_paginated_response(serializer.data)
+            
+        print("i am admin bro...")
+        return super().list(request, *args, **kwargs)
+    
 class FavoriteViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.FavoriteSerializer
     permission_classes = [IsAuthenticated, IsAdminOrTenantAndReadOnly, ]
@@ -231,9 +254,10 @@ class RentalDataViewSet(viewsets.ModelViewSet):
         if request.user.user_type != 'AD':
             tenant_only_queryset = queryset.filter(id=request.user.id)
             page = self.paginate_queryset(tenant_only_queryset)
-            serializer = self.get_serializer(data=page, many=True)
             
-            return self.get_paginated_response(serializer.data, status=status.HTTP_200_OK)
+            if page:
+                serializer = self.get_serializer(data=page, many=True)
+                return self.get_paginated_response(serializer.data)
         
         return super().list(request, *args, **kwargs)
 
@@ -304,7 +328,7 @@ class UsersViewset(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.Ge
             
             if page:
                 serializer = self.get_serializer(page, many=True)
-                return self.get_paginated_response(serializer.data, status=status.HTTP_200_OK)
+                return self.get_paginated_response(serializer.data)
                             
         return super().list(request, *args, **kwargs)
         
@@ -312,38 +336,42 @@ class UsersViewset(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.Ge
 """
 Params: current_password, password
 """
-class UpdatePassword(mixins.UpdateModelMixin,viewsets.GenericViewSet):
+class UpdatePassword(mixins.UpdateModelMixin, viewsets.GenericViewSet):
     queryset = models.AppUser.objects.all()
     serializer_class = serializers.PasswordUpdateSerializer
     permission_classes = [IsAuthenticated, IsAdminOrResourceOwnerOnly,]
     http_method_names = ('put',)
     
-    # def retrieve(self, request, *args, **kwargs):
-    #     user = self.queryset.get(id=self.kwargs['pk'])
-    #     return super().retrieve(request, *args, **kwargs)
-    
     def update(self, request, *args, **kwargs):
         data = request.data
-        user = self.queryset.get(id=self.kwargs['pk'])
+        try:
+            user = self.queryset.get(id=self.kwargs['pk'])
+        except Exception as e:
+            return Response({'error': 'UUID not found.'}, status=status.HTTP_404_NOT_FOUND)
         
-        if check_password(data['current_password'], encoded = user.password):
+        """
+        Alternative way to check user's password
+        if check_password(data['current_password'], encoded = user.password)
+        """
+        if user.check_password(data['current_password']):
             """
             Partial=False in Serializer, told Update mixins to use PUT not PATCH
             """
             serializer = self.get_serializer(self.get_object(),data=data, partial=False)
-            if(serializer.is_valid(raise_exception = True)):
+            if(serializer.is_valid()):
                 with transaction.atomic(savepoint=False):
                     """
                     Refreshing the access token
                     """
                     current_refresh_token = request.data['refresh_token']
                     if not current_refresh_token: 
-                        return BadRequest() 
+                        return Response({'error': 'Invalid Refresh Token.'}, status = status.HTTP_400_BAD_REQUEST ) 
                     
-                    print(f"refresh token: {current_refresh_token}")
+                    url = os.environ['LOCAL_BASEURL'] if settings.DEBUG else os.environ['TS_HEROKU_BASEURL']
+                    url = url + f"/api/v1/roomRental/refreshToken"
                     
                     result = requests.post(
-                        constants.BASEURL+"/refreshToken/",
+                        url,
                         data={
                             'refresh_token': current_refresh_token,        
                         },
@@ -352,14 +380,17 @@ class UpdatePassword(mixins.UpdateModelMixin,viewsets.GenericViewSet):
                     if result.status_code == 200:
                         user.set_password(serializer.validated_data['new_password'])
                         user.save()
+                        return Response(result.json())  
                     
-                        return Response(result.json())        
-                        
-                    return Response({'message': 'Internal server error'}, status=result.status_code)        
+                    elif result.status_code == 400:
+                        return Response({'error': 'Invalid refresh token.'}, status= result.status_code)
                     
-            return Response({'message': 'Something went wrong.'}, status=status.HTTP_400_BAD_REQUEST)        
+                    else:
+                        return Response({'error': 'Error while changing password.'}, status=result.status_code)        
+            
+            return Response({'error': 'Something went wrong.'}, status=status.HTTP_400_BAD_REQUEST)        
         
-        return Response({'message': 'Invalid current password'}, status=status.HTTP_400_BAD_REQUEST)        
+        return Response({'error': 'Invalid current password'}, status=status.HTTP_400_BAD_REQUEST)        
     
 """
 Params: first_name, last_name, username, image, education, occupation, user_type,
@@ -382,11 +413,12 @@ class DeleteUser(mixins.DestroyModelMixin ,viewsets.GenericViewSet):
         return super().destroy(request, *args, **kwargs)
     
 class GetTokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+    if not settings.DEBUG:
+        schema = None
     serializer_class = serializers.GetTokenSerializer
     permission_classes = (AllowAny, )
     http_method_names = ('post',)
     data = {}
-    schema = None
 
     def bad_params(self):
         """
@@ -398,8 +430,8 @@ class GetTokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
             return Response(self.data, status=constants.INVALID_PARAMETERS)    
         
     def create(self, request, *args, **kwargs):    
-        url = constants.BASEURL+f"/oauth2/token{os.environ['GETTOKEN']}/"
-        
+        url = os.environ['LOCAL_BASEURL'] if settings.DEBUG else os.environ['TS_HEROKU_BASEURL']
+        url = url + f"/oauth2/token{os.environ['GETTOKEN']}/"
         grant_type = 'password'
         client_id = os.environ.get('CLIENT_ID_MOBILE_CLIENT')
         client_secret = os.environ.get('CLIENT_SECRET_MOBILE_CLIENT')
@@ -424,11 +456,9 @@ class GetTokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
             'client_secret': client_secret
         }
 
-        print(username , password)
         result = requests.post(url, data=data)
         
         if result.status_code == 200:
-            print(result.text)
             return Response(result.json())
         
         elif result.status_code == 401:
@@ -439,18 +469,22 @@ class GetTokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
         
         else:
             self.data['error'] = "Error while getting token."
-        print(result.text)
         return Response(data=self.data, status=result.status_code)
                 
 
 class RevokeTokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+    if not settings.DEBUG:
+        schema = None
+        
     serializer_class = serializers.RevokeTokenSerializer
     permission_classes = [IsAuthenticated, IsAdminOrResourceOwnerOnly, ]
     data = {}
-    schema = None
+    http_method_names = ('post',)
+
     
     def create(self, request, *args, **kwargs):
-        url = constants.BASEURL + f"/oauth2/revoke_token{os.environ['REVOKETOKEN']}/"
+        url = os.environ['LOCAL_BASEURL'] if settings.DEBUG else os.environ['TS_HEROKU_BASEURL'] 
+        url = url + f"/oauth2/revoke_token{os.environ['REVOKETOKEN']}/"
         token = request.META['HTTP_AUTHORIZATION'].split(" ")[1]
         client_id = os.environ.get('CLIENT_ID_MOBILE_CLIENT')
         client_secret = os.environ.get('CLIENT_SECRET_MOBILE_CLIENT')
@@ -460,7 +494,12 @@ class RevokeTokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
             'client_id' : client_id,
             'client_secret': client_secret,
         }
-        previous_refresh_token = oauth2Model.RefreshToken.objects.get(access_token__token=token)
+        
+        try:
+            previous_refresh_token = oauth2Model.RefreshToken.objects.get(access_token__token=token)
+        except Exception as e:
+            return Response({'error': 'Invalid Token'}, status=status.HTTP_406_NOT_ACCEPTABLE)
+        
         result = requests.post(url, data=data,)
         
         if(result.status_code == 200):
@@ -489,10 +528,14 @@ class RefreshTokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     serializer_class = serializers.RefreshTokenSerializer
     permission_classes = ()
     data = {}
-    schema = None
+    http_method_names = ('post',)
+    if not settings.DEBUG:
+        schema = None
     
     def create(self, request, *args, **kwargs):
-        url = constants.BASEURL + f"/oauth2/refresh_token{os.environ['REFRESHTOKEN']}/"
+        #alternatively, use ALLOWED_HOSTS list to get own URL.
+        url = os.environ['LOCAL_BASEURL'] if settings.DEBUG else os.environ['TS_HEROKU_BASEURL']
+        url = url + f"/oauth2/refresh_token{os.environ.get('REFRESHTOKEN')}/"
         grant_type = 'refresh_token'
         refresh_token = request.data['refresh_token']
         client_id = os.environ.get('CLIENT_ID_MOBILE_CLIENT')

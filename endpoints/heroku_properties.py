@@ -5,10 +5,6 @@ import dj_database_url
 import dotenv
 import os
 
-dotenv_file = dotenv.find_dotenv(filename='.env')
-if os.path.isfile(dotenv_file):
-    dotenv.load_dotenv(dotenv_file)
-
 ALLOWED_HOSTS = ['roomrentalapis.herokuapp.com', 'roomrentalapis.com', ]
 
 # Parse database connection url strings like psql://user:pass@127.0.0.1:8458/db

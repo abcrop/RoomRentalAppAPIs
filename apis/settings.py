@@ -233,13 +233,12 @@ if DEBUG:
     try:
         from endpoints.local_properties import *
     except: 
-        from endpoints.heroku_properties import *
         print("No Such File Found in Local Properties")
-# else:
-#     try:
-#         from endpoints.heroku_properties import *
-#     except: 
-#         print("No Such File Found in Heroku Properties")
+else:
+    try:
+        from endpoints.heroku_properties import *
+    except: 
+        print("No Such File Found in Heroku Properties")
     
 
 # django_heroku.settings(locals())

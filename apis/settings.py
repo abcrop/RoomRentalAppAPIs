@@ -30,7 +30,7 @@ if os.path.isfile(dotenv_file):
             
 SECRET_KEY = os.environ.get('SECRET_KEY')
 
-DEBUG = False
+DEBUG = True
 
 # Application definition
 AUTHENTICATION_BACKENDS = (

@@ -21,7 +21,7 @@ class AppUser(AbstractUser):
     USER_TYPE = (
         ('LL', 'LANDLORD'),
         ('TN', 'TENANT'),
-        # ('AD', 'ADMIN'),
+        ('AD', 'ADMIN'),
     )
 
     user_type = models.CharField(max_length=2, choices=USER_TYPE)

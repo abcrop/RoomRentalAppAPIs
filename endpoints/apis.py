@@ -435,14 +435,19 @@ class GetTokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
         grant_type = 'password'
         client_id = os.environ.get('CLIENT_ID_MOBILE_CLIENT')
         client_secret = os.environ.get('CLIENT_SECRET_MOBILE_CLIENT')
+
+        print(url)
         
-        try:
+        try: 
             username = request.data['username']
             password = request.data['password']
             
             self.bad_params()
             username = validate_username(self, username)
             password = validate_password(self, password)
+
+            print(f"username: {username}  and   password: {password}")
+
                     
         except Exception as e:
             self.data['error'] = "Username and password are required."
@@ -465,7 +470,8 @@ class GetTokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
             self.data['error'] = "Invalid client."
             
         elif result.status_code == 400:
-            self.data['error'] = "Username or password is incorrect."
+            self.data['error'] = "Username or password is incorrect or invalid."
+            print(result.content)
         
         else:
             self.data['error'] = "Error while getting token."
